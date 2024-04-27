@@ -49,7 +49,9 @@ pipeline {
                 expression { SCAN_GRYPE == 'YES' }
             }
             steps {
-                sh "grype ${WORKSPACE}/dist/* > informe-scan.txt" 
+                script {
+                    sh "grype ${WORKSPACE}/dist/* > informe-scan.txt" 
+                }
                 archiveArtifacts artifacts: 'informe-scan.txt', onlyIfSuccessful: true 
             }
         }
