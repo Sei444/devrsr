@@ -8,7 +8,7 @@ pipeline {
         VAR='NUEVO'
     }
     tools {
-        nodejs 'nodejs' // Asegúrate de que Node.js esté instalado como una herramienta en Jenkins con el nombre 'nodejs'
+        nodejs 'nodejs'
     }
     parameters {
         string defaultValue: 'main', description: 'Colocar un branch a deployar', name: 'BRANCH', trim: false
@@ -41,6 +41,16 @@ pipeline {
         stage('Compilar proyecto') {
             steps {
                 sh 'npm run build'
+                archiveArtifacts artifacts: '**/dist/**', onlyIfSuccessful: true
+            }
+        }
+        stage("Test vulnerability") {
+            when {
+                expression { SCAN_GRYPE == 'YES' }
+            }
+            steps {
+                sh "grype ${WORKSPACE}/dist/* > informe-scan.txt" 
+                archiveArtifacts artifacts: 'informe-scan.txt', onlyIfSuccessful: true 
             }
         }
     }
