@@ -5,7 +5,7 @@ pipeline {
     }
     tools {
         jdk 'jdk21'
-        nodejs 'nodeJs'
+        nodejs 'nodejs'
         dockerTool 'docker'
     }
     parameters {
