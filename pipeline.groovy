@@ -90,7 +90,7 @@ pipeline{
                 echo "Iniciando Docker push"
                 sh "docker --version"
                 sh "pwd"
-                sh "docker build -t repo_back:1.0 ."
+                sh "docker build -t prueba_proyecto_back:1.0 ."
                 sh "docker tag prueba_proyecto_back:1.0 sei444/prueba_proyecto_back:0.0.1"
                 withCredentials([usernamePassword(credentialsId: registryCredential, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
