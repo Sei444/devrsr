@@ -41,9 +41,9 @@ pipeline {
         stage('Compilar proyecto') {
             steps {
                 sh 'npm run build'
-                stash includes: '/dist/', name: 'frontartifact'
-                archiveArtifacts artifacts: '/dist/', onlyIfSuccessful: true
-                sh "cp /dist/ /tmp/"
+                stash includes: '/dist', name: 'frontartifact'
+                archiveArtifacts artifacts: '/dist', onlyIfSuccessful: true
+                sh "cp /dist /tmp/"
             }
         }
         stage("Test vulnerability") {
