@@ -1,30 +1,20 @@
-def url_repo = "https://github.com/andresmerida/academic-management-ui.git"
-
 pipeline {
     agent {
         label 'jenkins_slave'
-    }
-    environment {
-        VAR='NUEVO'
-        workspace="/data/"
     }
     tools {
         jdk 'jdk21'
         nodejs 'nodejs'
         dockerTool 'docker'
     }
+
+    environment {
+        workspace="/data/"
+    }
     parameters {
-        string defaultValue: 'deploy', description: 'Colocar un branch a deployar', name: 'BRANCH', trim: false
         choice (name: 'SCAN_GRYPE', choices: ['YES', 'NO'], description: 'Activar escáner con grype')
     }
     stages {
-        stage("create build name") {
-            steps {
-                script {
-                    currentBuild.displayName = "frontend-" + currentBuild.number
-                }
-            }
-        }
         stage("Limpiar") {
             steps {
                 cleanWs()
@@ -32,8 +22,8 @@ pipeline {
         }
         stage("Descargar proyecto") {
             steps {
-                git credentialsId: 'git_credentials', branch: "${BRANCH}", url: "${url_repo}"
-                echo "Proyecto descargado"
+                git  credentialsId: 'git_credentials',branch: "deploy",url: "https://github.com/andresmerida/academic-management-ui.git"
+                echo "proyecto ui descargado"
             }
         }
         stage('Compilar proyecto') {
@@ -42,8 +32,6 @@ pipeline {
                 sh "pwd"
                 sh "npm install"
                 sh "npm run build"
-                sh "tar -rf dist.tar dist/"
-                archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
                 echo "Proyecto buildeado"
             }
         }
