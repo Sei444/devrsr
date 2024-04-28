@@ -15,7 +15,7 @@ pipeline {
         nodejs 'nodejs'
     }
     parameters {
-        string defaultValue: 'dev', description: 'Colocar un branch a deployar', name: 'BRANCH', trim: false
+        string defaultValue: 'deploy', description: 'Colocar un branch a deployar', name: 'BRANCH', trim: false
         choice (name: 'SCAN_GRYPE', choices: ['YES', 'NO'], description: 'Activar escáner con grype')
     }
     stages {
@@ -54,20 +54,20 @@ pipeline {
                 }
             }
         }
-        stage('Deploy Docker'){
+        stage('Build Docker Image') {
+            
             steps {
-                script{
-                    docker.withRegistry( '' , registryCredential ){
-                        dockerImage.push()
-                    }
+                sh "docker --version"
+                sh "pwd"
+                sh "docker build -t prueba_proyecto2:1.0 ."
+                sh "docker tag academy-ui:1.0 sei444/prueba_proyecto2:0.0.1"
+                withCredentials([usernamePassword(credentialsId: registryCredential, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+                    sh "docker push sei444/prueba_proyecto2:0.0.1"
                 }
+                
             }
-        }
-        stage('Cleaning up') {
-            steps{
-                sh "docker rmi $registry:$BUILD_NUMBER"
-            }
-        }
+        }        
         stage("Test vulnerability") {
             when {
                 expression { SCAN_GRYPE == 'YES' }
