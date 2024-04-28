@@ -41,7 +41,9 @@ pipeline {
         stage('Compilar proyecto') {
             steps {
                 sh 'npm run build'
-                archiveArtifacts artifacts: '**/dist/**', onlyIfSuccessful: true
+                stash includes: '/dist/', name: 'frontartifact'
+                archiveArtifacts artifacts: '/dist/', onlyIfSuccessful: true
+                sh "cp /dist/ /tmp/"
             }
         }
         stage("Test vulnerability") {
@@ -50,7 +52,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "grype ${WORKSPACE}/dist/* > informe-scan.txt" 
+                    sh "grype /dist/* > informe-scan.txt" 
                 }
                 archiveArtifacts artifacts: 'informe-scan.txt', onlyIfSuccessful: true 
             }
