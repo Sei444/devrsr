@@ -8,7 +8,7 @@ pipeline {
         VAR='NUEVO'
         registry = "sei444/prueba_proyecto"
         registryCredential = 'dockerhub_id'
-        dockerImage = ''
+        dockerTool 'docker'
     }
     tools {
         jdk 'jdk21'
@@ -37,15 +37,11 @@ pipeline {
                 echo "Proyecto descargado"
             }
         }
-        stage('Instalar dependencias') {
+        stage('Compilar proyecto') {
             steps {
                 sh "npm version"
                 sh "pwd"
                 sh "npm install"
-            }
-        }
-        stage('Compilar proyecto') {
-            steps {
                 sh "npm run build"
                 sh "tar -rf dist.tar dist/"
                 archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
