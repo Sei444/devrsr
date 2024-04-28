@@ -6,10 +6,9 @@ pipeline {
     }
     environment {
         VAR='NUEVO'
-	    workspace="/data/"
     }
     tools {
-	    jdk 'jdk21'
+	jdk 'jdk21'
         nodejs 'nodejs'
         dockerTool 'docker'
     }
@@ -37,34 +36,34 @@ pipeline {
             }
         }
         stage('Instalar dependencias') {
-            steps {
+            steps{
+                echo "iniciando el build"
                 sh "npm version"
                 sh "pwd"
-                sh 'npm install'
-		        sh 'npm run build'
+                sh "npm install"
+                sh "pwd"
+                sh "npm run build"
                 sh "tar -rf dist.tar dist/"
                 archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
             }
         }
-
-        stage("Test vulnerability") {
-            when {
+        stage("Test vulnerability"){
+	    when {
                 expression { SCAN_GRYPE == 'YES' }
             }
-            steps {
-                    sh "/grype node_modules/ > informe-scan-ui.txt"
-                    sh "pwd"
-                    archiveArtifacts artifacts: 'informe-scan.txt', onlyIfSuccessful: true 
+            steps{
+                sh "/grype node_modules/ > informe-scan-ui.txt"
+                sh "pwd"
+                archiveArtifacts artifacts: 'informe-scan-ui.txt', onlyIfSuccessful: true
             }
         }
-
-         stage('sonarqube analysis'){
+        stage('sonarqube analysis'){
             steps{
                script{
                    sh "pwd"
-						writeFile encoding: 'UTF-8', file: 'sonar-project.properties', text: """sonar.projectKey=academy-front
-						sonar.projectName=academy-front
-						sonar.projectVersion=academy-front
+			writeFile encoding: 'UTF-8', file: 'sonar-project.properties', text: """sonar.projectKey=academy-ui
+						sonar.projectName=academy-ui
+						sonar.projectVersion=academy-ui
 						sonar.sourceEncoding=UTF-8
 						sonar.sources=src/
 						sonar.exclusions=*/node_modules/,/.spec.js
@@ -75,8 +74,11 @@ pipeline {
 						     def scannerHome = tool 'Sonar_CI'
 						     sh "${tool("Sonar_CI")}/bin/sonar-scanner -X"
 						}
+
                }
+        
             }
-         }
-    }
+        
+        }
+    }    
 }
