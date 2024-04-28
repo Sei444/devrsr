@@ -7,6 +7,8 @@ pipeline {
     environment {
         VAR='NUEVO'
         workspace="/data/"
+        registry = "sei444/prueba_proyecto"
+        registryCredential = 'dockerhub_id'
     }
     tools {
         jdk 'jdk21'
@@ -54,7 +56,7 @@ pipeline {
                 sh "pwd"
                 sh "docker build -t prueba_proyecto:1.0 ."
                 sh "docker tag prueba_proyecto:1.0 sei444/prueba_proyecto:0.0.1"
-                withCredentials([usernamePassword(credentialsId: dockerhub_id, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                withCredentials([usernamePassword(credentialsId: registryCredential, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
                     sh "docker push sei444/prueba_proyecto:0.0.1"
                 }
