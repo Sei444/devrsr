@@ -1,41 +1,39 @@
 def url_repo = "https://github.com/andresmerida/academic-management-ui.git"
-
 pipeline {
     agent {
         label 'jenkins_slave'
     }
-    environment {
-        VAR='NUEVO'
-    }
     tools {
-	jdk 'jdk21'
-        nodejs 'nodejs'
+        jdk 'jdk21'
+        nodejs 'nodeJs'
         dockerTool 'docker'
     }
     parameters {
-        string defaultValue: 'dev', description: 'Colocar un branch a deployar', name: 'BRANCH', trim: false
-        choice (name: 'SCAN_GRYPE', choices: ['YES', 'NO'], description: 'Activar escáner con grype')
+        string(defaultValue: 'dev', description: 'Colocar un brach a deployar', name: 'BRANCH', trim: false)
+    }
+    environment {
+        VAR = 'NUEVO'
     }
     stages {
         stage("create build name") {
             steps {
                 script {
-                    currentBuild.displayName = "frontend-" + currentBuild.number
+                    currentBuild.displayName = "service_back-" + currentBuild.number
                 }
             }
         }
-        stage("Limpiar") {
+        stage("Clean") {
             steps {
                 cleanWs()
             }
         }
-        stage("Descargar proyecto") {
+        stage("download proyect") {
             steps {
                 git credentialsId: 'git_credentials', branch: "${BRANCH}", url: "${url_repo}"
-                echo "Proyecto descargado"
+                echo "proyecto ui descargado"
             }
         }
-        stage('Instalar dependencias') {
+        stage("build proyect"){
             steps{
                 echo "iniciando el build"
                 sh "npm version"
@@ -48,20 +46,28 @@ pipeline {
             }
         }
         stage("Test vulnerability"){
-	    when {
-                expression { SCAN_GRYPE == 'YES' }
-            }
             steps{
                 sh "/grype node_modules/ > informe-scan-ui.txt"
                 sh "pwd"
                 archiveArtifacts artifacts: 'informe-scan-ui.txt', onlyIfSuccessful: true
             }
         }
+	stage('Build Docker Image') {
+            steps {
+                sh "docker --version"
+                sh "pwd"
+                sh "docker build -t prueba_proyecto:1.0 ."
+                sh "docker tag prueba_proyecto:1.0 dafnec/prueba_proyecto:1.0"
+                sh "docker login -u s3rgi0444@gmail.com -p Delax4445."
+                sh "docker push sei444/prueba_proyecto:1.0"
+                
+            }
+        }
         stage('sonarqube analysis'){
             steps{
                script{
                    sh "pwd"
-			writeFile encoding: 'UTF-8', file: 'sonar-project.properties', text: """sonar.projectKey=academy-ui
+						writeFile encoding: 'UTF-8', file: 'sonar-project.properties', text: """sonar.projectKey=academy-ui
 						sonar.projectName=academy-ui
 						sonar.projectVersion=academy-ui
 						sonar.sourceEncoding=UTF-8
@@ -74,11 +80,10 @@ pipeline {
 						     def scannerHome = tool 'Sonar_CI'
 						     sh "${tool("Sonar_CI")}/bin/sonar-scanner -X"
 						}
-
                }
         
             }
         
         }
-    }    
+    }
 }
