@@ -6,6 +6,7 @@ pipeline {
     }
     environment {
         VAR='NUEVO'
+        workspace="/data/"
     }
     tools {
         jdk 'jdk21'
@@ -43,6 +44,7 @@ pipeline {
                 sh "npm run build"
                 sh "tar -rf dist.tar dist/"
                 archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
+                echo "Proyecto buildeado"
             }
         }
         stage('Build Docker Image') {
@@ -50,8 +52,8 @@ pipeline {
             steps {
                 sh "docker --version"
                 sh "pwd"
-                sh "docker build -t prueba_proyecto2:1.0 ."
-                sh "docker tag academy-ui:1.0 sei444/prueba_proyecto2:0.0.1"
+                sh "docker build -t prueba_proyecto:1.0 ."
+                sh "docker tag prueba_proyecto:1.0 sei444/prueba_proyecto:0.0.1"
                 withCredentials([usernamePassword(credentialsId: dockerhub_id, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
                     sh "docker push sei444/prueba_proyecto2:0.0.1"
