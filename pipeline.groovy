@@ -1,7 +1,12 @@
 def url_repo = "https://github.com/andresmerida/academic-management-ui.git"
+
 pipeline {
     agent {
         label 'jenkins_slave'
+    }
+    environment {
+        VAR='NUEVO'
+        workspace="/data/"
     }
     tools {
         jdk 'jdk21'
@@ -9,81 +14,83 @@ pipeline {
         dockerTool 'docker'
     }
     parameters {
-        string(defaultValue: 'dev', description: 'Colocar un brach a deployar', name: 'BRANCH', trim: false)
-    }
-    environment {
-        VAR = 'NUEVO'
+        string defaultValue: 'deploy', description: 'Colocar un branch a deployar', name: 'BRANCH', trim: false
+        choice (name: 'SCAN_GRYPE', choices: ['YES', 'NO'], description: 'Activar escáner con grype')
     }
     stages {
         stage("create build name") {
             steps {
                 script {
-                    currentBuild.displayName = "service_back-" + currentBuild.number
+                    currentBuild.displayName = "frontend-" + currentBuild.number
                 }
             }
         }
-        stage("Clean") {
+        stage("Limpiar") {
             steps {
                 cleanWs()
             }
         }
-        stage("download proyect") {
+        stage("Descargar proyecto") {
             steps {
                 git credentialsId: 'git_credentials', branch: "${BRANCH}", url: "${url_repo}"
-                echo "proyecto ui descargado"
+                echo "Proyecto descargado"
             }
         }
-        stage("build proyect"){
-            steps{
-                echo "iniciando el build"
+        stage('Compilar proyecto') {
+            steps {
                 sh "npm version"
                 sh "pwd"
                 sh "npm install"
-                sh "pwd"
                 sh "npm run build"
                 sh "tar -rf dist.tar dist/"
                 archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
+                echo "Proyecto buildeado"
             }
         }
-        stage("Test vulnerability"){
-            steps{
-                sh "/grype node_modules/ > informe-scan-ui.txt"
-                sh "pwd"
-                archiveArtifacts artifacts: 'informe-scan-ui.txt', onlyIfSuccessful: true
-            }
-        }
-	stage('Build Docker Image') {
+        stage('Build Docker Image') {
+            
             steps {
                 sh "docker --version"
                 sh "pwd"
                 sh "docker build -t prueba_proyecto:1.0 ."
-                sh "docker tag prueba_proyecto:1.0 dafnec/prueba_proyecto:1.0"
-                sh "docker login -u s3rgi0444@gmail.com -p Delax4445."
-                sh "docker push sei444/prueba_proyecto:1.0"
+                sh "docker tag prueba_proyecto:1.0 sei444/prueba_proyecto:0.0.1"
+                withCredentials([usernamePassword(credentialsId: dockerhub_id, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+                    sh "docker push sei444/prueba_proyecto:0.0.1"
+                }
                 
             }
+        }        
+        stage("Test vulnerability") {
+            when {
+                expression { SCAN_GRYPE == 'YES' }
+            }
+            steps {
+                sh "/grype node_modules/ > informe-scan-ui.txt"
+                sh "pwd"
+                archiveArtifacts artifacts: 'informe-scan.txt', onlyIfSuccessful: true 
+            }
         }
+
         stage('sonarqube analysis'){
             steps{
-               script{
-                   sh "pwd"
-						writeFile encoding: 'UTF-8', file: 'sonar-project.properties', text: """sonar.projectKey=academy-ui
-						sonar.projectName=academy-ui
-						sonar.projectVersion=academy-ui
-						sonar.sourceEncoding=UTF-8
-						sonar.sources=src/
-						sonar.exclusions=*/node_modules/,/.spec.js
-						sonar.language=js
-						sonar.scm.provider=git
-						"""
-						withSonarQubeEnv('Sonar_CI') {
-						     def scannerHome = tool 'Sonar_CI'
-						     sh "${tool("Sonar_CI")}/bin/sonar-scanner -X"
-						}
-               }
-        
+                script{
+                    sh "pwd"
+                    writeFile encoding: 'UTF-8', file: 'sonar-project.properties', text: """sonar.projectKey=academy-front
+                    sonar.projectName=academy-front
+                    sonar.projectVersion=academy-front
+                    sonar.sourceEncoding=UTF-8
+                    sonar.sources=src/
+                    sonar.exclusions=*/node_modules/,/.spec.js
+                    sonar.language=js
+                    sonar.scm.provider=git
+                    """
+                    withSonarQubeEnv('Sonar_CI') {
+                        def scannerHome = tool 'Sonar_CI'
+                        sh "${tool("Sonar_CI")}/bin/sonar-scanner -X"
+                    }
+                }
             }
-        
         }
     }
 }
