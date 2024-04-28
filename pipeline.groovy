@@ -6,12 +6,12 @@ pipeline {
     }
     environment {
         VAR='NUEVO'
-	registry = "sei444/prueba_proyecto"
-	registryCredential = 'dockerhub_id'
-	dockerImage = ''
+        registry = "sei444/prueba_proyecto"
+        registryCredential = 'dockerhub_id'
+        dockerImage = ''
     }
     tools {
-	jdk 'jdk21'
+        jdk 'jdk21'
         nodejs 'nodejs'
     }
     parameters {
@@ -49,53 +49,55 @@ pipeline {
                 sh "npm run build"
                 sh "tar -rf dist.tar dist/"
                 archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
-		dockerImage = docker.build registry + ":$BUILD_NUMBER"
+                script {
+                    dockerImage = docker.build registry + ":$BUILD_NUMBER"
+                }
             }
         }
-	stage('Deploy Docker'){
-	    steps {
-		script{
-			docker.withRegistry( '' , registryCredential ){
-				dockerImage.push()
-			}
-		}
-	    }
-	}
-	stage('Cleaning up') {
-	    steps{
-		sh "docker rmi $registry:$BUILD_NUMBER"
-	    }
-	}
+        stage('Deploy Docker'){
+            steps {
+                script{
+                    docker.withRegistry( '' , registryCredential ){
+                        dockerImage.push()
+                    }
+                }
+            }
+        }
+        stage('Cleaning up') {
+            steps{
+                sh "docker rmi $registry:$BUILD_NUMBER"
+            }
+        }
         stage("Test vulnerability") {
             when {
                 expression { SCAN_GRYPE == 'YES' }
             }
             steps {
-                    sh "/grype node_modules/ > informe-scan-ui.txt"
-                    sh "pwd"
-                    archiveArtifacts artifacts: 'informe-scan.txt', onlyIfSuccessful: true 
+                sh "/grype node_modules/ > informe-scan-ui.txt"
+                sh "pwd"
+                archiveArtifacts artifacts: 'informe-scan.txt', onlyIfSuccessful: true 
             }
         }
 
-         stage('sonarqube analysis'){
+        stage('sonarqube analysis'){
             steps{
-               script{
-                   sh "pwd"
-						writeFile encoding: 'UTF-8', file: 'sonar-project.properties', text: """sonar.projectKey=academy-front
-						sonar.projectName=academy-front
-						sonar.projectVersion=academy-front
-						sonar.sourceEncoding=UTF-8
-						sonar.sources=src/
-						sonar.exclusions=*/node_modules/,/.spec.js
-						sonar.language=js
-						sonar.scm.provider=git
-						"""
-						withSonarQubeEnv('Sonar_CI') {
-						     def scannerHome = tool 'Sonar_CI'
-						     sh "${tool("Sonar_CI")}/bin/sonar-scanner -X"
-						}
-               }
+                script{
+                    sh "pwd"
+                    writeFile encoding: 'UTF-8', file: 'sonar-project.properties', text: """sonar.projectKey=academy-front
+                    sonar.projectName=academy-front
+                    sonar.projectVersion=academy-front
+                    sonar.sourceEncoding=UTF-8
+                    sonar.sources=src/
+                    sonar.exclusions=*/node_modules/,/.spec.js
+                    sonar.language=js
+                    sonar.scm.provider=git
+                    """
+                    withSonarQubeEnv('Sonar_CI') {
+                        def scannerHome = tool 'Sonar_CI'
+                        sh "${tool("Sonar_CI")}/bin/sonar-scanner -X"
+                    }
+                }
             }
-         }
+        }
     }
 }
