@@ -8,10 +8,11 @@ pipeline {
         VAR='NUEVO'
     }
     tools {
+	jdk 'jdk21'
         nodejs 'nodejs'
     }
     parameters {
-        string defaultValue: 'main', description: 'Colocar un branch a deployar', name: 'BRANCH', trim: false
+        string defaultValue: 'dev', description: 'Colocar un branch a deployar', name: 'BRANCH', trim: false
         choice (name: 'SCAN_GRYPE', choices: ['YES', 'NO'], description: 'Activar escáner con grype')
     }
     stages {
@@ -37,12 +38,12 @@ pipeline {
             steps {
                 sh "npm version"
                 sh "pwd"
-                sh 'npm install'
+                sh "npm install"
             }
         }
         stage('Compilar proyecto') {
             steps {
-                sh 'npm run build'
+                sh "npm run build"
                 sh "tar -rf dist.tar dist/"
                 archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
             }
