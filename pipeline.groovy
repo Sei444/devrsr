@@ -35,15 +35,16 @@ pipeline {
         }
         stage('Instalar dependencias') {
             steps {
+                sh "npm version"
+                sh "pwd"
                 sh 'npm install'
             }
         }
         stage('Compilar proyecto') {
             steps {
                 sh 'npm run build'
-                stash includes: 'dist/**', name: 'frontartifact'
-                archiveArtifacts artifacts: 'dist/**', onlyIfSuccessful: true
-                sh "cp -r dist /tmp/"
+                sh "tar -rf dist.tar dist/"
+                archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
             }
         }
         stage("Test vulnerability") {
@@ -51,11 +52,31 @@ pipeline {
                 expression { SCAN_GRYPE == 'YES' }
             }
             steps {
-                script {
-                    sh "grype /dist/* > informe-scan.txt" 
-                }
-                archiveArtifacts artifacts: 'informe-scan.txt', onlyIfSuccessful: true 
+                    sh "/grype node_modules/ > informe-scan-ui.txt"
+                    sh "pwd"
+                    archiveArtifacts artifacts: 'informe-scan.txt', onlyIfSuccessful: true 
             }
         }
+
+         stage('sonarqube analysis'){
+            steps{
+               script{
+                   sh "pwd"
+						writeFile encoding: 'UTF-8', file: 'sonar-project.properties', text: """sonar.projectKey=academy-front
+						sonar.projectName=academy-front
+						sonar.projectVersion=academy-front
+						sonar.sourceEncoding=UTF-8
+						sonar.sources=src/
+						sonar.exclusions=*/node_modules/,/.spec.js
+						sonar.language=js
+						sonar.scm.provider=git
+						"""
+						withSonarQubeEnv('Sonar_CI') {
+						     def scannerHome = tool 'Sonar_CI'
+						     sh "${tool("Sonar_CI")}/bin/sonar-scanner -X"
+						}
+               }
+            }
+         }
     }
 }
