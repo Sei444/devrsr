@@ -1,27 +1,23 @@
 def url_repo = "https://github.com/andresmerida/academic-management.git"
 pipeline{
-   agent 
-   {
-    label 'jenkins_slave'
+   agent {
+	label 'jenkins_slave'
    }
-    environment {
-            VAR='NUEVO'
-            registry = "sei444/prueba_proyecto"
-            registryCredential = 'dockerhub_id'
-            dockerImage = ''
-        }
-    tools{
+   environment {
+        VAR='NUEVO'
+        registry = "sei444/prueba_proyecto"
+        registryCredential = 'dockerhub_id'
+        dockerImage = ''
+   }
+   tools{
         maven 'maven-396'
         jdk 'jdk21'
-    }
-    parameters{
-         string defaultValue: 'dev', description: 'Colocar un brach a deployar', name: 'BRANCH', trim: false
-         choice (name: 'SCAN_GRYPE', choices: ['YES','NO'], description: 'Activar escáner con grype')
-    }
-    environment{
-       VAR='NUEVO'
-    }
-    stages{
+   }
+   parameters{
+        string defaultValue: 'dev', description: 'Colocar un brach a deployar', name: 'BRANCH', trim: false
+        choice (name: 'SCAN_GRYPE', choices: ['YES','NO'], description: 'Activar escáner con grype')
+   }
+   stages{
         stage("create build name"){
             steps{           
                 script{
