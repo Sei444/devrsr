@@ -8,11 +8,11 @@ pipeline {
         VAR='NUEVO'
         registry = "sei444/prueba_proyecto"
         registryCredential = 'dockerhub_id'
-        dockerTool 'docker'
     }
     tools {
         jdk 'jdk21'
         nodejs 'nodejs'
+        dockerTool 'docker'
     }
     parameters {
         string defaultValue: 'deploy', description: 'Colocar un branch a deployar', name: 'BRANCH', trim: false
