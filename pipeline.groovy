@@ -12,6 +12,7 @@ pipeline{
    tools{
         maven 'maven-396'
         jdk 'jdk21'
+	dockerTool 'docker'
    }
    parameters{
         string defaultValue: 'dev', description: 'Colocar un brach a deployar', name: 'BRANCH', trim: false
