@@ -6,6 +6,9 @@ pipeline {
     }
     environment {
         VAR='NUEVO'
+	registry = "sei444/prueba_proyecto"
+	registryCredential = 'dockerhub_id'
+	dockerImage = ''
     }
     tools {
 	jdk 'jdk21'
@@ -46,8 +49,23 @@ pipeline {
                 sh "npm run build"
                 sh "tar -rf dist.tar dist/"
                 archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
+		dockerImage = docker.build registry + ":$BUILD_NUMBER"
             }
         }
+	stage('Deploy Docker'){
+	    steps {
+		script{
+			docker.withRegistry( '' , registryCredential ){
+				dockerImage.push()
+			}
+		}
+	    }
+	}
+	stage('Cleaning up') {
+	    steps{
+		sh "docker rmi $registry:$BUILD_NUMBER"
+	    }
+	}
         stage("Test vulnerability") {
             when {
                 expression { SCAN_GRYPE == 'YES' }
