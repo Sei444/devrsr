@@ -43,9 +43,6 @@ pipeline {
                 sh "npm run build"
                 sh "tar -rf dist.tar dist/"
                 archiveArtifacts artifacts: 'dist.tar',onlyIfSuccessful:true
-                script {
-                    dockerImage = docker.build registry + ":$BUILD_NUMBER"
-                }
             }
         }
         stage('Build Docker Image') {
